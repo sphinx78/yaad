@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A premium local PDF photobook flipbook viewer."
+    />
+    <title>Photobook Flipbook</title>
+    <link rel="icon" href="logo.png" />
+    <link rel="preload" href="logo.png" as="image" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell" id="appShell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Photobook home">
+          <img src="logo.png" alt="Photobook logo" />
+        </a>
+
+        <div class="status-wrap" aria-live="polite">
+          <span class="status-text" id="statusText">Loading book.pdf</span>
+          <span class="load-track" aria-hidden="true">
+            <span id="loadBar"></span>
+          </span>
+        </div>
+
+        <nav class="toolbar" aria-label="Flipbook controls">
+          <button
+            class="icon-button"
+            type="button"
+            data-action="thumbs"
+            aria-label="Toggle thumbnails"
+            title="Thumbnails"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" />
+            </svg>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-action="prev"
+            aria-label="Previous page"
+            title="Previous"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m15 5-7 7 7 7" />
+            </svg>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-action="next"
+            aria-label="Next page"
+            title="Next"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 5 7 7-7 7" />
+            </svg>
+          </button>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <button
+            class="icon-button"
+            type="button"
+            data-action="zoom-out"
+            aria-label="Zoom out"
+            title="Zoom out"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M8 11h6M16.5 16.5 21 21" />
+            </svg>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-action="zoom-in"
+            aria-label="Zoom in"
+            title="Zoom in"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M8 11h6M11 8v6M16.5 16.5 21 21" />
+            </svg>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-action="spread"
+            aria-label="Toggle single page"
+            title="Single page"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5.5h7.5c1.1 0 2 .9 2 2V20c0-1.1-.9-2-2-2H4z" />
+              <path d="M13.5 7.5c0-1.1.9-2 2-2H20V18h-4.5c-1.1 0-2 .9-2 2z" />
+            </svg>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-action="fullscreen"
+            aria-label="Toggle fullscreen"
+            title="Fullscreen"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />
+            </svg>
+          </button>
+        </nav>
+      </header>
+
+      <main class="viewer">
+        <aside class="thumb-panel" id="thumbPanel" aria-label="Page thumbnails">
+          <div class="thumb-head">
+            <span>Pages</span>
+            <button
+              class="icon-button small"
+              type="button"
+              data-action="thumbs"
+              aria-label="Close thumbnails"
+              title="Close"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
+          <div class="thumb-list" id="thumbList"></div>
+        </aside>
+
+        <section class="book-area" id="bookArea" aria-label="Photobook">
+          <div class="table-light" aria-hidden="true"></div>
+          <div class="book-platform" id="bookPlatform">
+            <div class="book-depth left" aria-hidden="true"></div>
+            <div class="book-depth right" aria-hidden="true"></div>
+            <div class="spine-depth" aria-hidden="true"></div>
+            <div class="book-host" id="bookHost"></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="bottombar">
+        <span class="page-indicator" id="pageIndicator">Page 0 / 0</span>
+        <input
+          class="page-range"
+          id="pageRange"
+          type="range"
+          min="1"
+          max="1"
+          value="1"
+          aria-label="Page"
+        />
+        <span class="zoom-indicator" id="zoomIndicator">100%</span>
+      </footer>
+
+      <div class="loading-screen" id="loadingScreen">
+        <div class="loading-mark">
+          <img src="logo.png" alt="" />
+        </div>
+        <div class="loading-copy">
+          <strong id="loadingTitle">Preparing photobook</strong>
+          <span id="loadingDetail">Loading book.pdf</span>
+        </div>
+      </div>
+    </div>
+
+    <script src="./vendor/page-flip.browser.min.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
