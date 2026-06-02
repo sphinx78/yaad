@@ -2,7 +2,7 @@ import * as pdfjsLib from "./vendor/pdf.min.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "./vendor/pdf.worker.min.mjs";
 
-const PDF_URL = "./book.pdf";
+const BOOK_SOURCE_PATH = "./book-source.txt";
 const CACHE_LIMIT = 14;
 const THUMB_WIDTH = 170;
 const MIN_ZOOM = 0.74;
@@ -632,20 +632,142 @@ function bindControls() {
   });
 }
 
+function parseBookSourceLine(text) {
+  const line = text
+    .split(/\r?\n/)
+    .map((entry) => entry.trim())
+    .find((entry) => entry && !entry.startsWith("#"));
+  if (!line) {
+    throw new Error("Add your Dropbox (or direct PDF) link in book-source.txt");
+  }
+  return line;
+}
+
+function isPdfBytes(buffer) {
+  if (!buffer || buffer.byteLength < 4) return false;
+  const header = new Uint8Array(buffer, 0, 4);
+  return (
+    header[0] === 0x25 &&
+    header[1] === 0x50 &&
+    header[2] === 0x44 &&
+    header[3] === 0x46
+  );
+}
+
+function isDropboxLink(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname === "dropbox.com" || parsed.hostname === "www.dropbox.com";
+  } catch {
+    return false;
+  }
+}
+
+function normalizeDropboxDirectDownloadUrl(url) {
+  const parsed = new URL(url);
+  if (!isDropboxLink(url)) return url;
+
+  // Prefer the dl.dropboxusercontent.com host (direct bytes). Keep the path + query
+  // (except dl=*) so the link stays stable for large files.
+  parsed.hostname = "dl.dropboxusercontent.com";
+  parsed.searchParams.delete("dl");
+  return parsed.toString();
+}
+
+async function fetchBinary(targetUrl) {
+  // Clean/simple: direct fetch (works for Dropbox direct bytes URLs).
+  // If the host blocks cross-origin fetch, use a single fallback proxy.
+  try {
+    const direct = await fetch(targetUrl);
+    if (direct.ok) return direct;
+  } catch {
+    // ignore and try proxy
+  }
+
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+  const proxied = await fetch(proxyUrl);
+  if (!proxied.ok) {
+    throw new Error("Could not download the PDF (check the link and sharing).");
+  }
+  return proxied;
+}
+
+async function downloadPdfBytesFromUrl(pdfUrl, onProgress) {
+  const response = await fetchBinary(pdfUrl);
+  const buffer = await response.arrayBuffer();
+
+  if (!isPdfBytes(buffer)) {
+    throw new Error("Downloaded file is not a PDF. Make sure the link points to a PDF.");
+  }
+
+  if (onProgress) {
+    onProgress({ loaded: buffer.byteLength, total: buffer.byteLength });
+  }
+
+  return buffer;
+}
+
+async function readBookSource() {
+  const response = await fetch(BOOK_SOURCE_PATH, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Could not read book-source.txt");
+  }
+  return parseBookSourceLine(await response.text());
+}
+
+async function resolvePdfSource() {
+  const sourceLine = await readBookSource();
+
+  if (sourceLine.startsWith("http://") || sourceLine.startsWith("https://")) {
+    const remoteUrl = isDropboxLink(sourceLine)
+      ? normalizeDropboxDirectDownloadUrl(sourceLine)
+      : sourceLine;
+
+    setStatus(isDropboxLink(sourceLine) ? "Loading PDF from Dropbox…" : "Loading PDF…");
+    const data = await downloadPdfBytesFromUrl(remoteUrl, ({ loaded, total }) => {
+      if (total > 0) {
+        const percent = (loaded / total) * 100;
+        setProgress(percent);
+        setStatus(`Downloading PDF ${Math.round(percent)}%`);
+      }
+    });
+    return { mode: "data", data, label: "remote" };
+  }
+
+  const pdfUrl =
+    sourceLine.startsWith("http://") || sourceLine.startsWith("https://")
+      ? sourceLine
+      : sourceLine.startsWith("./")
+        ? sourceLine
+        : `./${sourceLine}`;
+
+  return { mode: "url", url: pdfUrl, label: pdfUrl };
+}
+
 async function loadPdf() {
-  const task = pdfjsLib.getDocument({
-    url: PDF_URL,
-    disableAutoFetch: true,
-    disableStream: false,
-    rangeChunkSize: 262144,
-    useSystemFonts: true,
-  });
+  const source = await resolvePdfSource();
+  const documentOptions =
+    source.mode === "data"
+      ? {
+          data: source.data,
+          disableAutoFetch: true,
+          useSystemFonts: true,
+        }
+      : {
+          url: source.url,
+          disableAutoFetch: true,
+          disableStream: false,
+          rangeChunkSize: 262144,
+          useSystemFonts: true,
+        };
+
+  const task = pdfjsLib.getDocument(documentOptions);
 
   task.onProgress = ({ loaded, total }) => {
     if (total > 0) {
       const percent = (loaded / total) * 100;
       setProgress(percent);
-      setStatus(`Loading book.pdf ${Math.round(percent)}%`);
+      setStatus(`Opening PDF ${Math.round(percent)}%`);
     }
   };
 
@@ -663,12 +785,16 @@ async function loadPdf() {
 function showError(error) {
   console.error(error);
   els.app.classList.add("is-error");
-  els.loadingTitle.textContent = "Could not load book.pdf";
+  els.loadingTitle.textContent = "Could not load the book";
+  const message =
+    error instanceof Error && error.message
+      ? error.message
+      : "The PDF could not be loaded.";
   const localHint =
     window.location.protocol === "file:"
-      ? "Open this folder through a small static server so the browser can fetch the PDF."
-      : "Check that book.pdf is in this same folder and the server can read it.";
-  els.loadingDetail.textContent = localHint;
+      ? "Serve this folder with a static server (for example: python3 -m http.server 4173)."
+      : "Edit book-source.txt with a public Dropbox (or direct) PDF link, then redeploy.";
+  els.loadingDetail.textContent = `${message} ${localHint}`;
   els.status.textContent = "PDF load failed";
 }
 

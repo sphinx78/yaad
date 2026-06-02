@@ -1,0 +1,18 @@
+# Photobook PDF source
+#
+# Paste ONE public PDF link on the next line (no quotes).
+# Recommended: Dropbox share link to the PDF.
+#
+# Supported link shapes, for example:
+# Dropbox:
+https://www.dropbox.com/scl/fi/co9vqw95d6ne4qmj7fb4d/nishak-paudel-4.pdf?rlkey=j333nlqfjxc6xoebmjixtj5yi&st=du3qj8qu&dl=0
+# https://www.dropbox.com/scl/fi/YOUR_ID/your.pdf?dl=0
+# (the app will automatically turn dl=0 into dl=1)
+#
+# Google Drive also works for some files:
+# https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=sharing
+#
+# To swap books later, replace that line and redeploy (or refresh locally).
+# You do not need book.pdf in this repo or Git LFS.
+#
+# Put your link below this line:
