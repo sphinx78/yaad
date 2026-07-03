@@ -5,7 +5,7 @@
 #
 # Supported link shapes, for example:
 # Dropbox:
-https://www.dropbox.com/scl/fi/p7rg8domsoo9zyukbdk1s/thaifinal_ordered.pdf?rlkey=p7yjz2uz0kxa7wh84i5moxpbd&st=ey1hfyyb&dl=0
+https://www.dropbox.com/scl/fi/5t6b9r626n5ei93ttt9ed/Copy-of-Untitled-1.pdf?rlkey=b7kmd5gsvyeu604wlx74l5jns&st=tvg4tlnn&dl=0
 # https://www.dropbox.com/scl/fi/YOUR_ID/your.pdf?dl=0
 # (the app will automatically turn dl=0 into dl=1)
 #
